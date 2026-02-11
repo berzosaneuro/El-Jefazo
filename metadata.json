@@ -1,0 +1,9 @@
+{
+  "name": "EL JEFAZO - Master Control",
+  "description": "Elite Cyberpunk Control Room PWA for managing clones, versions, renewals, and global system sync.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

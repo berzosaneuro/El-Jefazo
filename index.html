@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EL JEFAZO | Master Control HUD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&family=Audiowide&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+          darkMode: 'class',
+          theme: {
+            extend: {
+              fontFamily: {
+                hud: ['Orbitron', 'sans-serif'],
+              }
+            }
+          }
+        }
+    </script>
+    <style>
+        :root {
+            --neon-cyan: #00f3ff;
+            --neon-blue: #0062ff;
+            --neon-red: #ff0044;
+            --neon-green: #00ff66;
+            --deep-blue: #020617;
+            --bg-main: #020617;
+            --text-main: #e2e8f0;
+            --panel-bg: rgba(2, 6, 23, 0.85);
+            --electric-glow: rgba(0, 243, 255, 0.4);
+            --border-glow: rgba(0, 243, 255, 0.2);
+        }
+
+        html:not(.dark) {
+            --bg-main: #f8fafc;
+            --text-main: #0f172a;
+            --panel-bg: rgba(255, 255, 255, 0.9);
+            --border-glow: rgba(0, 98, 255, 0.1);
+        }
+        
+        body {
+            margin: 0;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+            background-attachment: fixed;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .dark body {
+            background-image: 
+                radial-gradient(circle at 50% 10%, rgba(0, 98, 255, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 50% 90%, rgba(0, 243, 255, 0.05) 0%, transparent 40%);
+        }
+
+        /* Lightning Effect Background */
+        .lightning-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 150, 255, 0.02) 0%, transparent 70%);
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        /* Scanlines Overlay */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.05) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.2;
+        }
+
+        h1, h2, h3, .font-hud { font-family: 'Orbitron', sans-serif; }
+
+        .metallic-text {
+            background: linear-gradient(to bottom, #ffffff 0%, #a5d8ff 50%, #009dff 51%, #005286 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.5));
+            font-weight: 900;
+        }
+
+        /* HUD Containers */
+        .hud-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            box-shadow: 0 0 20px rgba(0, 98, 255, 0.15), inset 0 0 15px rgba(0, 98, 255, 0.05);
+            position: relative;
+        }
+
+        .hud-panel::before, .hud-panel::after {
+            content: "";
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border-color: var(--neon-cyan);
+            border-style: solid;
+            pointer-events: none;
+            z-index: 20;
+        }
+        .hud-panel::before { top: -2px; left: -2px; border-width: 2px 0 0 2px; }
+        .hud-panel::after { bottom: -2px; right: -2px; border-width: 0 2px 2px 0; }
+
+        /* Animated Neon Border System */
+        .neon-border-animated {
+            position: relative;
+            padding: 3px;
+            background: transparent;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+        .neon-border-animated::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 250%;
+            height: 250%;
+            background: conic-gradient(transparent, var(--neon-cyan), transparent 30%);
+            animation: rotate-border 4s linear infinite;
+            transform-origin: 0 0;
+            z-index: 0;
+            margin-top: -125%;
+            margin-left: -125%;
+        }
+        .neon-border-critical::before { background: conic-gradient(transparent, var(--neon-red), transparent 30%); }
+        .neon-border-success::before { background: conic-gradient(transparent, var(--neon-green), transparent 30%); }
+
+        @keyframes rotate-border {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .neon-border-animated::after {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            background: var(--bg-main);
+            border-radius: 6px;
+            z-index: 1;
+        }
+
+        /* Buttons with diagonal light streak */
+        .btn-hud {
+            position: relative;
+            background: rgba(0, 98, 255, 0.1);
+            border: 2px solid rgba(0, 243, 255, 0.5);
+            color: var(--text-main);
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            overflow: hidden;
+            transition: all 0.3s;
+            z-index: 1;
+        }
+        .btn-hud::after {
+            content: "";
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            transition: 0.5s;
+        }
+        .btn-hud:hover {
+            background: rgba(0, 243, 255, 0.2);
+            box-shadow: 0 0 15px var(--electric-glow);
+            transform: scale(1.02);
+        }
+        .btn-hud:active { transform: scale(0.98); }
+        .btn-hud:hover::after { left: 100%; }
+
+        /* Custom Toggle Switch for HUD */
+        .hud-switch {
+            appearance: none;
+            width: 54px;
+            height: 28px;
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: 0.4s;
+        }
+        .hud-switch:checked {
+            background: rgba(0, 98, 255, 0.4);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+        }
+        .hud-switch::before {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #475569;
+            top: 3px; left: 4px;
+            transition: 0.4s;
+        }
+        .hud-switch:checked::before {
+            left: 28px;
+            background: var(--neon-cyan);
+            box-shadow: 0 0 8px var(--neon-cyan);
+        }
+
+        /* Status Text [ON] / [OFF] */
+        .status-on { color: var(--neon-green); text-shadow: 0 0 5px var(--neon-green); }
+        .status-off { color: var(--neon-red); text-shadow: 0 0 5px var(--neon-red); }
+
+        /* Animation for lightning background */
+        @keyframes lightning-strike {
+            0%, 98%, 100% { opacity: 0; }
+            99% { opacity: 0.4; }
+        }
+        .lightning-effect {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: -1;
+            animation: lightning-strike 10s infinite;
+        }
+
+        .flicker { animation: flicker-anim 0.5s infinite alternate; }
+        @keyframes flicker-anim {
+            0% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+
+        @keyframes alert-flicker {
+            0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 1; }
+            20%, 21.999%, 63%, 63.999%, 65%, 69.999% { opacity: 0.4; }
+        }
+        .animate-alert-flicker { animation: alert-flicker 4s infinite; }
+
+        @keyframes subtle-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(0.99); }
+        }
+        .animate-subtle-pulse { animation: subtle-pulse 3s infinite ease-in-out; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 243, 255, 0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--neon-cyan); }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0",
+    "uuid": "https://esm.sh/uuid@^13.0.0",
+    "dexie": "https://esm.sh/dexie@^4.3.0",
+    "zustand": "https://esm.sh/zustand@^5.0.11",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
+  }
+}
+</script>
+</head>
+<body>
+    <div class="lightning-bg"></div>
+    <div class="lightning-effect"></div>
+    <div id="root"></div>
+    <div class="scanlines"></div>
+</body>
+</html>
