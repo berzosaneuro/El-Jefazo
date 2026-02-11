@@ -36,6 +36,7 @@ interface AppState {
   syncClone: (id: string) => Promise<void>;
   syncAll: () => Promise<void>;
   runUpdate: (id: string) => Promise<void>;
+  runRollback: (id: string) => Promise<void>;
   checkAllUpdates: () => Promise<void>;
   
   // Renewals
@@ -115,7 +116,6 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   login: async (u, p) => {
-    // Artificial delay for futuristic feeling
     await new Promise(r => setTimeout(r, 1000));
     if (u.toUpperCase() === 'ELI') {
       playSound('success');
@@ -126,7 +126,10 @@ export const useStore = create<AppState>((set, get) => ({
     return false;
   },
 
-  logout: () => set({ isAuthenticated: false }),
+  logout: () => {
+    playSound('click');
+    set({ isAuthenticated: false });
+  },
 
   addLog: async (level, message) => {
     const entry: LogEntry = {
@@ -211,25 +214,34 @@ export const useStore = create<AppState>((set, get) => ({
     const clone = get().clones.find(c => c.id === id);
     if (!clone) return;
     set({ syncProgress: 0 });
-    // Simulate sync
-    for(let i=0; i<=100; i+=25) {
+    
+    // Handshake animation with sound feedback
+    playSound('click');
+    for(let i=0; i<=100; i+=20) {
       set({ syncProgress: i });
-      await new Promise(r => setTimeout(r, 200));
+      await new Promise(r => setTimeout(r, 150));
     }
+
     const now = new Date().toISOString();
-    await get().updateClone(id, { lastSync: now, serverStatus: ServerStatus.ONLINE });
-    get().addLog('INFO', `Handshake exitoso con ${clone.name}`);
+    // Forcing ONLINE status on successful sync
+    await get().updateClone(id, { 
+      lastSync: now, 
+      serverStatus: ServerStatus.ONLINE,
+      status: CloneStatus.ACTIVE 
+    });
+    
+    get().addLog('INFO', `Handshake exitoso con ${clone.name}. Telemetría restaurada.`);
     playSound('success');
     set({ syncProgress: 0 });
   },
 
   syncAll: async () => {
     playSound('click');
-    get().addLog('INFO', 'Iniciando sincronización global...');
+    get().addLog('INFO', 'Iniciando sincronización global del ecosistema...');
     for (const clone of get().clones) {
       await get().syncClone(clone.id);
     }
-    get().addLog('INFO', 'Todos los nodos sincronizados.');
+    get().addLog('INFO', 'Mainframe sincronizado. Todos los nodos están ONLINE.');
   },
 
   runUpdate: async (id) => {
@@ -238,11 +250,32 @@ export const useStore = create<AppState>((set, get) => ({
     get().addLog('WARNING', `Actualizando núcleo de ${clone.name}...`);
     playSound('click');
     await new Promise(r => setTimeout(r, 2000));
+    
+    const prev = clone.versionInstalled;
     await get().updateClone(id, { 
       versionInstalled: clone.versionAvailable, 
-      lastUpdate: new Date().toISOString() 
+      previousVersion: prev,
+      lastUpdate: new Date().toISOString(),
+      serverStatus: ServerStatus.ONLINE
     });
     get().addLog('INFO', `Clon ${clone.name} parcheado a v${clone.versionAvailable}`);
+    playSound('success');
+  },
+
+  runRollback: async (id) => {
+    const clone = get().clones.find(c => c.id === id);
+    if (!clone || !clone.previousVersion) return;
+    get().addLog('CRITICAL', `Iniciando ROLLBACK de EMERGENCIA para ${clone.name}...`);
+    playSound('alert');
+    await new Promise(r => setTimeout(r, 1500));
+    
+    await get().updateClone(id, { 
+      versionInstalled: clone.previousVersion,
+      previousVersion: undefined,
+      lastUpdate: new Date().toISOString(),
+      serverStatus: ServerStatus.ONLINE 
+    });
+    get().addLog('INFO', `Rollback completado. ${clone.name} restaurado a v${clone.previousVersion}`);
     playSound('success');
   },
 
@@ -282,7 +315,6 @@ export const useStore = create<AppState>((set, get) => ({
     set(state => ({ renewals: state.renewals.filter(r => r.id !== id) }));
   },
 
-  // Implementation of missing scheduled task methods
   addScheduledTask: async (data) => {
     const task: ScheduledTask = {
       id: uuidv4(),
@@ -374,21 +406,22 @@ export const useStore = create<AppState>((set, get) => ({
     a.download = `JEFAZO_CORE_BACKUP_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     get().addLog('INFO', 'Backup local generado.');
+    playSound('success');
   },
 
   importBackup: async (json) => {
     try {
       const data = JSON.parse(json);
-      // The transaction method is now correctly recognized as db is an instance of a class extending Dexie
       await db.transaction('rw', [db.clones, db.renewals, db.config, db.logs, db.scheduledTasks], async () => {
         if (data.clones) { await db.clones.clear(); await db.clones.bulkAdd(data.clones); }
         if (data.renewals) { await db.renewals.clear(); await db.renewals.bulkAdd(data.renewals); }
         if (data.config) { await db.config.clear(); await db.config.add(data.config); }
       });
-      // Fixed: Log level 'SUCCESS' is not a valid LogEntry['level'], using 'INFO' for success messages
       get().addLog('INFO', 'Core restaurado. Reiniciando mainframe...');
+      playSound('success');
       setTimeout(() => window.location.reload(), 1500);
     } catch (e) {
+      playSound('error');
       alert('FALLO EN LA INTEGRIDAD DEL BACKUP.');
     }
   }

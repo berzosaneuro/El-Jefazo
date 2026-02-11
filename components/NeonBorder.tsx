@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface NeonBorderProps {
@@ -13,9 +14,9 @@ const NeonBorder: React.FC<NeonBorderProps> = ({ children, variant = 'cyan', cla
   return (
     <div 
       onClick={onClick}
-      className={`neon-border-animated ${variantClass} ${className} ${onClick ? 'cursor-pointer' : ''}`}
+      className={`neon-border-animated ${variantClass} ${className} ${onClick ? 'cursor-pointer group' : ''}`}
     >
-      <div className="relative z-10 w-full h-full p-1.5"> {/* Slight internal padding */}
+      <div className="relative z-10 w-full h-full p-0.5 rounded-lg overflow-hidden">
         {children}
       </div>
     </div>

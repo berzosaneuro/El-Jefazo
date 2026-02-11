@@ -22,6 +22,7 @@ export interface Clone {
   type: string;
   versionInstalled: string;
   versionAvailable: string;
+  previousVersion?: string; // Para el Rollback Engine
   status: CloneStatus;
   serverStatus: ServerStatus;
   lastSync: string;
@@ -30,7 +31,7 @@ export interface Clone {
   updateChannel: 'stable' | 'beta' | 'dev';
   logs: LogEntry[];
   settings: Record<string, any>;
-  imageUrl?: string; // Visual signature of the clone
+  imageUrl?: string;
 }
 
 export interface LogEntry {
@@ -121,5 +122,5 @@ export interface MarketplaceClone {
   category: string;
   version: string;
   size: string;
-  imageUrl?: string; // Preview image for the marketplace
+  imageUrl?: string;
 }

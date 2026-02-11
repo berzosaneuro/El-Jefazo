@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../store';
 import { Clone, CloneStatus, ServerStatus } from '../types';
@@ -8,7 +9,7 @@ const Ecosystem: React.FC = () => {
   const { clones, runUpdate, removeClone, addClone, syncClone, syncProgress } = useStore();
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [filter, setFilter] = useState<'ALL' | 'UPDATE' | 'INACTIVE'>('ALL');
+  const [filter, setFilter] = useState<'ALL' | 'UPDATE' | 'INACTIVE' | 'OFFLINE'>('ALL');
   
   // Track specific operations per clone
   const [updatingIds, setUpdatingIds] = useState<Record<string, number>>({});
@@ -67,6 +68,7 @@ const Ecosystem: React.FC = () => {
     let list = clones.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
     if (filter === 'UPDATE') list = list.filter(c => c.versionInstalled !== c.versionAvailable);
     if (filter === 'INACTIVE') list = list.filter(c => c.status === CloneStatus.INACTIVE);
+    if (filter === 'OFFLINE') list = list.filter(c => c.serverStatus === ServerStatus.OFFLINE);
     return list;
   }, [clones, search, filter]);
 
@@ -74,10 +76,33 @@ const Ecosystem: React.FC = () => {
     <div className="max-w-5xl mx-auto space-y-12 pb-24">
       {/* HUD Overview Bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-4">
-        <MiniHUDWidget label="TOTAL NODOS" value={clones.length} />
-        <MiniHUDWidget label="ACTIVOS" value={clones.filter(c => c.status === CloneStatus.ACTIVE).length} color="text-green-500" />
-        <MiniHUDWidget label="UPDATES" value={clones.filter(c => c.versionInstalled !== c.versionAvailable).length} color="text-yellow-500" />
-        <MiniHUDWidget label="VULNERABLES" value={clones.filter(c => c.serverStatus === ServerStatus.OFFLINE).length} color="text-red-500" />
+        <MiniHUDWidget 
+          label="TOTAL NODOS" 
+          value={clones.length} 
+          onClick={() => setFilter('ALL')} 
+          active={filter === 'ALL'}
+        />
+        <MiniHUDWidget 
+          label="ACTIVOS" 
+          value={clones.filter(c => c.status === CloneStatus.ACTIVE).length} 
+          color="text-green-500" 
+          onClick={() => setFilter('ALL')}
+        />
+        <MiniHUDWidget 
+          label="UPDATES" 
+          value={clones.filter(c => c.versionInstalled !== c.versionAvailable).length} 
+          color="text-yellow-500" 
+          onClick={() => setFilter('UPDATE')} 
+          active={filter === 'UPDATE'}
+        />
+        <MiniHUDWidget 
+          label="VULNERABLES" 
+          value={clones.filter(c => c.serverStatus === ServerStatus.OFFLINE).length} 
+          color="text-red-500" 
+          onClick={() => setFilter('OFFLINE')} 
+          active={filter === 'OFFLINE'}
+          alert={clones.filter(c => c.serverStatus === ServerStatus.OFFLINE).length > 0}
+        />
       </div>
 
       <div className="text-center pt-8">
@@ -95,7 +120,7 @@ const Ecosystem: React.FC = () => {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full dark:bg-slate-900/60 bg-white border dark:border-cyan-500/20 border-slate-200 p-4 pl-12 dark:text-cyan-400 text-blue-600 outline-none font-hud text-sm tracking-widest rounded shadow-lg focus:border-cyan-500"
           />
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-50">📡</span>
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-50 text-cyan-500">📡</span>
         </div>
         <div className="flex gap-2">
            <select 
@@ -106,6 +131,7 @@ const Ecosystem: React.FC = () => {
              <option value="ALL">TODOS</option>
              <option value="UPDATE">ACTUALIZABLES</option>
              <option value="INACTIVE">INACTIVOS</option>
+             <option value="OFFLINE">DESCONECTADOS</option>
            </select>
            <button 
             onClick={() => setShowAddModal(true)}
@@ -125,20 +151,32 @@ const Ecosystem: React.FC = () => {
           const syncProgressLocal = syncingIds[clone.id] ?? 0;
 
           return (
-            <NeonBorder key={clone.id} variant="cyan" className="p-0.5 shadow-[0_0_30_px_rgba(0,243,255,0.05)]">
+            <NeonBorder key={clone.id} variant={clone.serverStatus === ServerStatus.OFFLINE ? 'critical' : 'cyan'} className="p-0.5 shadow-[0_0_30_px_rgba(0,243,255,0.05)]">
               <div className="p-1 rounded-lg">
                 <div className="p-6 rounded-xl flex flex-col md:flex-row gap-8 items-stretch group bg-slate-950/90 backdrop-blur-md">
-                  {/* Thumbnail */}
-                  <div className="w-full md:w-64 dark:bg-black/60 bg-slate-100 rounded border dark:border-cyan-500/10 border-slate-200 overflow-hidden relative shrink-0 aspect-video md:aspect-auto">
+                  {/* Thumbnail with Cyberpunk Refinement */}
+                  <div className="w-full md:w-64 min-h-[160px] dark:bg-black/60 bg-slate-100 rounded border dark:border-cyan-500/10 border-slate-200 overflow-hidden relative shrink-0 aspect-video md:aspect-auto">
                     {clone.imageUrl ? (
-                      <img src={clone.imageUrl} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-700" alt="UI Thumbnail" />
+                      <>
+                        <img 
+                          src={clone.imageUrl} 
+                          className={`w-full h-full object-cover filter brightness-[0.4] contrast-125 opacity-40 group-hover:grayscale-0 group-hover:brightness-100 group-hover:opacity-100 transition-all duration-1000 ease-in-out scale-110 group-hover:scale-100 ${clone.serverStatus === ServerStatus.OFFLINE ? 'grayscale contrast-50' : 'grayscale'}`} 
+                          alt={clone.name} 
+                        />
+                        <div className="absolute inset-0 bg-cyan-950/20 mix-blend-color group-hover:bg-transparent transition-colors duration-1000"></div>
+                        <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(0,243,255,0.05)_1px,transparent_1px)] bg-[size:100%_4px] opacity-40"></div>
+                      </>
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center dark:text-cyan-900 text-slate-300 opacity-20">
+                      <div className="w-full h-full flex flex-col items-center justify-center dark:text-cyan-900 text-slate-300 opacity-20 bg-slate-900/40">
                         <span className="block text-4xl mb-2">📉</span>
-                        <span className="text-[10px] font-hud">SIN TELEMETRÍA</span>
+                        <span className="text-[10px] font-hud tracking-widest">SIN TELEMETRÍA</span>
                       </div>
                     )}
-                    <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(0,243,255,0.02)_1px,transparent_1px)] bg-[size:100%_3px]"></div>
+                    {clone.serverStatus === ServerStatus.OFFLINE && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-red-950/40 backdrop-blur-sm">
+                        <span className="font-hud text-[10px] text-red-500 animate-pulse tracking-widest font-black">ENLACE CAÍDO</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Data */}
@@ -150,7 +188,7 @@ const Ecosystem: React.FC = () => {
                         </h3>
                         <p className="text-[10px] dark:text-cyan-800 text-slate-500 font-hud tracking-[0.3em] uppercase mt-1">{clone.type} // MAINFRAME_LINK</p>
                       </div>
-                      <div className={`px-3 py-1 text-[9px] font-black font-hud border rounded ${clone.serverStatus === ServerStatus.ONLINE ? 'border-green-500 text-green-500 shadow-[0_0_10px_rgba(0,255,0,0.2)]' : 'border-red-500 text-red-500'}`}>
+                      <div className={`px-3 py-1 text-[9px] font-black font-hud border rounded ${clone.serverStatus === ServerStatus.ONLINE ? 'border-green-500 text-green-500 shadow-[0_0_10px_rgba(0,255,0,0.2)]' : 'border-red-500 text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)] animate-pulse'}`}>
                         {clone.serverStatus}
                       </div>
                     </div>
@@ -158,7 +196,7 @@ const Ecosystem: React.FC = () => {
                     <div className="grid grid-cols-2 gap-4 mt-6 text-[11px] font-hud dark:text-slate-500 tracking-widest border-t border-cyan-500/10 pt-4">
                       <div className="space-y-1">
                         <p>VERSIÓN: <span className="dark:text-cyan-400 text-blue-600 font-bold">v{clone.versionInstalled}</span></p>
-                        <p>ÚLTIMA SYNC: <span className="dark:text-slate-300">{new Date(clone.lastSync).toLocaleTimeString()}</span></p>
+                        <p>ÚLTIMA SYNC: <span className="dark:text-slate-300">{clone.lastSync === 'Never' ? 'NEVER' : new Date(clone.lastSync).toLocaleTimeString()}</span></p>
                       </div>
                       <div className="space-y-1 text-right">
                         <p>DISPONIBLE: <span className="dark:text-cyan-400 font-bold">v{clone.versionAvailable}</span></p>
@@ -175,16 +213,16 @@ const Ecosystem: React.FC = () => {
                       ) : (
                         <div className="flex gap-4">
                           <button 
-                            onClick={() => navigate('/control')}
+                            onClick={() => navigate(`/clone/${clone.id}`)}
                             className="flex-1 btn-hud py-3 text-[11px] font-black"
                           >
                             ACCEDER
                           </button>
                           <button 
                             onClick={() => handleSync(clone.id)}
-                            className="flex-1 btn-hud py-3 text-[11px] font-black bg-cyan-900/10"
+                            className={`flex-1 btn-hud py-3 text-[11px] font-black ${clone.serverStatus === ServerStatus.OFFLINE ? 'bg-red-900/10 border-red-500 text-red-400' : 'bg-cyan-900/10'}`}
                           >
-                            SINCRONIZAR
+                            {clone.serverStatus === ServerStatus.OFFLINE ? 'RECONECTAR' : 'SINCRONIZAR'}
                           </button>
                           {clone.versionInstalled !== clone.versionAvailable && (
                             <button 
@@ -204,15 +242,16 @@ const Ecosystem: React.FC = () => {
             </NeonBorder>
           );
         })}
+
+        {filteredClones.length === 0 && (
+          <div className="text-center py-20 border border-dashed border-cyan-500/20 rounded-xl">
+             <p className="font-hud text-slate-600 tracking-widest uppercase text-xs">NO SE ENCONTRARON NODOS BAJO ESTE FILTRO</p>
+             <button onClick={() => setFilter('ALL')} className="mt-4 text-cyan-500 underline text-[10px] font-hud tracking-widest">MOSTRAR TODO EL ECOSISTEMA</button>
+          </div>
+        )}
       </div>
 
       {showAddModal && <AddCloneModal onClose={() => setShowAddModal(false)} onAdd={addClone} />}
-      
-      {/* Quick Actions Float */}
-      <div className="fixed bottom-8 right-8 flex flex-col gap-4 z-40">
-        <button onClick={() => navigate('/share')} className="p-4 bg-cyan-600 rounded-full shadow-lg shadow-cyan-500/30 hover:scale-110 transition-transform text-white">🔗</button>
-        <button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="p-4 bg-slate-800 rounded-full shadow-lg hover:scale-110 transition-transform text-white">↑</button>
-      </div>
     </div>
   );
 };
@@ -232,8 +271,11 @@ const ProgressBar = ({ label, progress }: { label: string, progress: number }) =
   </div>
 );
 
-const MiniHUDWidget = ({ label, value, color = "text-cyan-400" }: any) => (
-  <div className="hud-panel p-4 rounded text-center border-cyan-500/10">
+const MiniHUDWidget = ({ label, value, color = "text-cyan-400", onClick, active, alert }: any) => (
+  <div 
+    onClick={onClick}
+    className={`hud-panel p-4 rounded text-center border-cyan-500/10 cursor-pointer transition-all hover:border-cyan-400 ${active ? 'bg-cyan-500/5 border-cyan-500/40 shadow-[0_0_15px_rgba(0,243,255,0.1)]' : ''} ${alert ? 'animate-pulse border-red-500/50' : ''}`}
+  >
     <p className="text-[8px] text-slate-600 font-hud tracking-[0.2em] mb-1 uppercase">{label}</p>
     <p className={`text-xl font-black font-hud ${color}`}>{value}</p>
   </div>

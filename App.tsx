@@ -10,7 +10,9 @@ import CommandCenter from './pages/CommandCenter';
 import RenewalsPage from './pages/RenewalsPage';
 import Communications from './pages/Communications';
 import Share from './pages/Share';
+import CloneDetails from './pages/CloneDetails';
 import SirenOverlay from './components/SirenOverlay';
+import QuickActions from './components/QuickActions';
 import { sendPushNotification } from './utils/notifications';
 
 const HUDHeader = () => {
@@ -143,8 +145,10 @@ const App: React.FC = () => {
           <Route path="/comms" element={<Communications />} />
           <Route path="/control" element={<CommandCenter />} />
           <Route path="/share" element={<Share />} />
+          <Route path="/clone/:id" element={<CloneDetails />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+        <QuickActions />
         {criticalRenewal && <SirenOverlay renewal={criticalRenewal} onClose={() => setCriticalRenewal(null)} />}
       </div>
     </Router>

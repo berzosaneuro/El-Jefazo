@@ -1,6 +1,6 @@
 
-// Use named import for Dexie to ensure proper inheritance and access to instance methods like version() and transaction()
-import { Dexie, type Table } from 'dexie';
+// Use default import for Dexie to ensure proper inheritance and access to instance methods like version() and transaction()
+import Dexie, { type Table } from 'dexie';
 import { Clone, Renewal, UserConfig, LogEntry, AppNotification, ScheduledTask } from './types';
 
 // Defining the database class by extending the Dexie class. This ensures that all instance methods 
@@ -17,7 +17,7 @@ export class ElJefazoDB extends Dexie {
     super('ElJefazoDB');
     // Using the inherited version() method to define the database schema.
     // The version number should be incremented if the schema changes.
-    // Using named import for Dexie ensures 'version' and other instance methods are recognized by TypeScript.
+    // Fixed: Using default import for Dexie ensures 'version' and other instance methods are recognized by TypeScript.
     this.version(3).stores({
       clones: 'id, name, status',
       renewals: 'id, name, renewalDate',
