@@ -8,15 +8,26 @@ interface NeonBorderProps {
   onClick?: () => void;
 }
 
-const NeonBorder: React.FC<NeonBorderProps> = ({ children, variant = 'cyan', className = '', onClick }) => {
-  const variantClass = variant === 'critical' ? 'neon-border-critical' : variant === 'success' ? 'neon-border-success' : '';
+const NeonBorder: React.FC<NeonBorderProps> = ({ 
+  children, 
+  variant = 'cyan', 
+  className = '', 
+  onClick 
+}) => {
+  const getVariantClass = () => {
+    switch (variant) {
+      case 'critical': return 'neon-border-critical';
+      case 'success': return 'neon-border-success';
+      default: return '';
+    }
+  };
   
   return (
     <div 
       onClick={onClick}
-      className={`neon-border-animated ${variantClass} ${className} ${onClick ? 'cursor-pointer group' : ''}`}
+      className={`neon-border-animated ${getVariantClass()} ${className} ${onClick ? 'cursor-pointer' : ''}`}
     >
-      <div className="relative z-10 w-full h-full p-0.5 rounded-lg overflow-hidden">
+      <div className="inner-content h-full w-full">
         {children}
       </div>
     </div>

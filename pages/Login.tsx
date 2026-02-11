@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { useStore } from '../store';
-import NeonBorder from '../components/NeonBorder';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('ELI');
@@ -17,10 +16,7 @@ const Login: React.FC = () => {
     const ok = await login(username, password);
     if (ok) {
       setSuccess(true);
-      // Let the animation finish
-      setTimeout(() => {
-        // useStore's login already sets isAuthenticated: true
-      }, 2500);
+      // Wait for animation
     } else {
       setError(true);
       setTimeout(() => setError(false), 2000);
@@ -29,106 +25,83 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-[#020617] relative overflow-hidden">
-      {/* Background Ambience & Rays */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-30">
-           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,147,255,0.2)_0%,transparent_70%)]"></div>
-        </div>
-      </div>
+    <div className="min-h-screen flex items-center justify-center p-6 bg-[#010409] relative overflow-hidden">
+      {/* Background Glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,147,255,0.15)_0%,transparent_70%)]"></div>
 
       <div className="w-full max-w-lg z-10 flex flex-col items-center">
-        {/* Logo Title - Exactly like the photo */}
-        <h1 className="text-5xl md:text-7xl font-hud metallic-text mb-8 tracking-wider text-center flicker">
+        {/* Main Title */}
+        <h1 className="text-6xl md:text-8xl font-hud metallic-text mb-12 tracking-tighter animate-flicker">
           EL JEFAZO
         </h1>
 
-        {/* Central Vehicle with electric effect */}
-        <div className="relative w-full aspect-[16/10] mb-10 overflow-visible group">
-          {/* Energy aura around car */}
-          <div className="absolute inset-0 bg-cyan-500/10 blur-[60px] rounded-full scale-75 group-hover:scale-90 transition-transform duration-1000"></div>
-          
+        {/* Central Vehicle - Bugatti style with aura */}
+        <div className="relative w-full aspect-[16/10] mb-12 group">
+          <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full scale-75 animate-pulse"></div>
           <img 
             src="https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=800&q=80" 
-            className="w-full h-full object-contain relative z-10 brightness-110 contrast-125 drop-shadow-[0_0_20px_rgba(0,147,255,0.4)]"
+            className="w-full h-full object-contain relative z-10 brightness-110 contrast-125 drop-shadow-[0_0_30px_rgba(0,147,255,0.5)]"
             alt="Main Control Vehicle"
           />
-          
-          {/* Animated Lightning Bolts overlay on image */}
-          <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden rounded-xl">
-             <div className="absolute top-0 left-1/4 w-0.5 h-full bg-cyan-400 opacity-0 animate-[lightning-bolt_5s_infinite_1s] blur-[1px]"></div>
-             <div className="absolute top-0 right-1/3 w-0.5 h-full bg-cyan-400 opacity-0 animate-[lightning-bolt_7s_infinite_3s] blur-[1px]"></div>
+          {/* Animated Rays on the car */}
+          <div className="absolute inset-0 z-20 pointer-events-none">
+             <div className="absolute top-1/2 left-0 w-full h-px bg-cyan-400 opacity-0 animate-[lightning-ray_5s_infinite] blur-[1px]"></div>
           </div>
         </div>
 
-        {/* Login Form Layout exactly like screenshot */}
-        <form onSubmit={handleLogin} className="w-full max-w-sm space-y-4">
-          <div className="relative">
-            <input 
-              type="text" 
-              placeholder="USUARIO / ID"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full hud-input p-4 text-center rounded-lg outline-none transition-all"
-            />
-          </div>
-          <div className="relative">
-            <input 
-              type="password" 
-              placeholder="CONTRASEÑA"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full hud-input p-4 text-center rounded-lg outline-none transition-all"
-            />
-          </div>
+        {/* Form Fields - Identical to photo */}
+        <form onSubmit={handleLogin} className="w-full max-w-sm space-y-6">
+          <input 
+            type="text" 
+            placeholder="USUARIO / ID"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full hud-input p-5 text-lg rounded border border-cyan-500/30 outline-none focus:border-cyan-500 transition-all uppercase"
+          />
+          <input 
+            type="password" 
+            placeholder="CONTRASEÑA"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full hud-input p-5 text-lg rounded border border-cyan-500/30 outline-none focus:border-cyan-500 transition-all uppercase"
+          />
 
           <button 
             type="submit"
             disabled={loading || success}
-            className="w-full btn-hud p-4 text-xl font-hud tracking-[0.3rem] mt-6 uppercase rounded-lg shadow-lg"
+            className="w-full btn-militar p-5 text-2xl tracking-[0.4em] mt-4"
           >
             {loading ? 'CONECTANDO...' : 'ENTRAR'}
           </button>
         </form>
 
         {error && (
-          <div className="mt-6 p-2 text-red-500 text-xs font-hud tracking-widest uppercase animate-pulse">
-            ERROR_DE_AUTENTICACION // REINTENTAR
-          </div>
+          <p className="mt-8 text-red-500 font-hud text-xs tracking-[0.5em] animate-pulse">
+            // ACCESO_DENEGADO //
+          </p>
         )}
       </div>
 
-      {/* Login Success Overlay - Mirroring the video exactly */}
+      {/* Access Granted Overlay - From Video */}
       {success && (
-        <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-700">
-          <div className="text-center p-12 relative overflow-hidden">
-            {/* Crackling energy background for success */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(0,255,102,0.1)_0%,transparent_70%)] animate-pulse"></div>
-            
-            <h2 className="text-4xl md:text-7xl access-granted-text uppercase animate-in zoom-in duration-500">
-              ACCESO CONCEDIDO
-            </h2>
-            
-            <div className="h-1 w-full bg-gradient-to-r from-transparent via-green-500 to-transparent mx-auto mt-8 shadow-[0_0_20px_rgba(0,255,102,0.8)]"></div>
-            
-            <p className="mt-8 font-hud text-green-800 tracking-[0.4em] text-[10px] uppercase animate-pulse">
-              SINCRONIZANDO NODOS DEL SISTEMA MAESTRO...
-            </p>
+        <div className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center animate-in fade-in duration-500">
+          <div className="relative w-full max-w-4xl text-center">
+             <div className="hud-scan"></div>
+             <h2 className="text-5xl md:text-8xl font-hud font-black text-[#00ff66] drop-shadow-[0_0_20px_#00ff66] tracking-widest uppercase mb-4">
+               ACCESO CONCEDIDO
+             </h2>
+             <div className="h-1 w-full bg-green-500/50 shadow-[0_0_20px_rgba(0,255,102,0.8)]"></div>
+             <p className="mt-8 font-hud text-green-900 tracking-[0.8em] text-[10px] animate-pulse">SINCRONIZANDO NODOS_MAESTROS_ELI...</p>
           </div>
         </div>
       )}
 
       <style>{`
-        @keyframes lightning-bolt {
-          0%, 98%, 100% { opacity: 0; transform: scaleX(1) translateX(0); }
-          99% { opacity: 1; transform: scaleX(2) translateX(10px); }
-        }
-        .access-granted-text {
-          animation: access-pulse 2s infinite ease-in-out;
-        }
-        @keyframes access-pulse {
-          0%, 100% { transform: scale(1); filter: brightness(1); }
-          50% { transform: scale(1.02); filter: brightness(1.3); }
+        @keyframes lightning-ray {
+          0%, 95%, 100% { opacity: 0; transform: translateY(0); }
+          96% { opacity: 0.8; transform: translateY(-20px); }
+          97% { opacity: 0.2; transform: translateY(20px); }
+          98% { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>

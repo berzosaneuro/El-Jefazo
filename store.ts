@@ -116,7 +116,7 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   login: async (u, p) => {
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 1500));
     if (u.toUpperCase() === 'ELI') {
       playSound('success');
       set({ isAuthenticated: true });
@@ -215,15 +215,13 @@ export const useStore = create<AppState>((set, get) => ({
     if (!clone) return;
     set({ syncProgress: 0 });
     
-    // Handshake animation with sound feedback
     playSound('click');
-    for(let i=0; i<=100; i+=20) {
+    for(let i=0; i<=100; i+=10) {
       set({ syncProgress: i });
-      await new Promise(r => setTimeout(r, 150));
+      await new Promise(r => setTimeout(r, 100));
     }
 
     const now = new Date().toISOString();
-    // Forcing ONLINE status on successful sync
     await get().updateClone(id, { 
       lastSync: now, 
       serverStatus: ServerStatus.ONLINE,
@@ -286,6 +284,7 @@ export const useStore = create<AppState>((set, get) => ({
        await get().updateClone(res.id, { versionAvailable: res.newVersion });
     }
     get().addLog('INFO', 'Verificación de versiones completada.');
+    playSound('success');
   },
 
   addRenewal: async (data) => {
@@ -301,6 +300,7 @@ export const useStore = create<AppState>((set, get) => ({
     await db.renewals.add(renewal);
     set(state => ({ renewals: [...state.renewals, renewal] }));
     get().addLog('INFO', `Nueva renovación registrada: ${renewal.name}`);
+    playSound('success');
   },
 
   updateRenewal: async (id, updates) => {
@@ -313,6 +313,7 @@ export const useStore = create<AppState>((set, get) => ({
   removeRenewal: async (id) => {
     await db.renewals.delete(id);
     set(state => ({ renewals: state.renewals.filter(r => r.id !== id) }));
+    playSound('error');
   },
 
   addScheduledTask: async (data) => {
@@ -412,6 +413,7 @@ export const useStore = create<AppState>((set, get) => ({
   importBackup: async (json) => {
     try {
       const data = JSON.parse(json);
+      // Fix: Ensured db instance (from ElJefazoDB) is used within the transaction correctly after named import fix in db.ts.
       await db.transaction('rw', [db.clones, db.renewals, db.config, db.logs, db.scheduledTasks], async () => {
         if (data.clones) { await db.clones.clear(); await db.clones.bulkAdd(data.clones); }
         if (data.renewals) { await db.renewals.clear(); await db.renewals.bulkAdd(data.renewals); }

@@ -14,9 +14,12 @@
             extend: {
               fontFamily: {
                 hud: ['Orbitron', 'sans-serif'],
+                ui: ['Rajdhani', 'sans-serif'],
               },
               animation: {
-                'shimmer-fast': 'shimmer 2s infinite',
+                'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                'flicker': 'flicker 2s infinite',
+                'scanline-fast': 'scanline 4s linear infinite',
               }
             }
           }
@@ -28,88 +31,63 @@
             --neon-blue: #0062ff;
             --neon-red: #ff0044;
             --neon-green: #00ff66;
-            --deep-blue: #020617;
-            --bg-main: #020617;
-            --text-main: #e2e8f0;
-            --panel-bg: rgba(2, 6, 23, 0.85);
-            --electric-glow: rgba(0, 243, 255, 0.4);
-            --border-glow: rgba(0, 243, 255, 0.2);
+            --bg-dark: #010409;
         }
 
-        html:not(.dark) {
-            --bg-main: #f8fafc;
-            --text-main: #0f172a;
-            --panel-bg: rgba(255, 255, 255, 0.9);
-            --border-glow: rgba(0, 98, 255, 0.1);
-        }
-        
         body {
             margin: 0;
-            background-color: var(--bg-main);
-            color: var(--text-main);
+            background-color: var(--bg-dark);
+            color: #e2e8f0;
             font-family: 'Rajdhani', sans-serif;
             overflow-x: hidden;
-            background-attachment: fixed;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            height: 100vh;
         }
 
-        /* Lightning Storm Background */
-        .lightning-bg {
+        /* Lightning Storm Simulation */
+        .storm-bg {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 50% 50%, rgba(0, 100, 255, 0.05) 0%, transparent 70%);
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, #001a33 0%, #010409 100%);
             z-index: -2;
-            pointer-events: none;
         }
 
-        .lightning-bg::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image: url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
-            opacity: 0.2;
-            mix-blend-mode: overlay;
+        @keyframes lightning-flash {
+            0%, 95%, 100% { opacity: 0; }
+            96% { opacity: 0.1; }
+            97% { opacity: 0.8; }
+            98% { opacity: 0.2; }
+            99% { opacity: 1; }
         }
 
-        /* Global Scanlines */
-        .scanlines {
+        .lightning {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-            background-size: 100% 4px;
+            inset: 0;
+            background: white;
+            opacity: 0;
             pointer-events: none;
-            z-index: 9999;
-            opacity: 0.15;
+            z-index: -1;
+            animation: lightning-flash 12s infinite;
         }
 
-        h1, h2, h3, .font-hud { font-family: 'Orbitron', sans-serif; }
-
+        /* Metallic Cyberpunk Text */
         .metallic-text {
-            background: linear-gradient(to bottom, #ffffff 0%, #a5d8ff 45%, #009dff 50%, #005286 100%);
+            background: linear-gradient(to bottom, #fff 0%, #b0dfff 45%, #00a2ff 50%, #005a92 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 15px rgba(0, 243, 255, 0.8));
+            filter: drop-shadow(0 0 10px rgba(0, 162, 255, 0.7));
             font-weight: 900;
-            letter-spacing: 0.1em;
+            text-transform: uppercase;
         }
 
-        /* HUD Panels with Corners */
-        .hud-panel {
-            background: var(--panel-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 243, 255, 0.3);
-            box-shadow: 0 0 30px rgba(0, 98, 255, 0.2);
-            position: relative;
-        }
-
-        /* Neon Border Animated Engine */
+        /* Energy Running Border System */
         .neon-border-animated {
             position: relative;
             padding: 2px;
             overflow: hidden;
-            border-radius: 12px;
-            z-index: 1;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.02);
         }
+
         .neon-border-animated::before {
             content: '';
             position: absolute;
@@ -120,101 +98,121 @@
             background: conic-gradient(
                 transparent, 
                 var(--neon-cyan), 
-                transparent 25%, 
+                transparent 15%, 
                 transparent 50%, 
                 var(--neon-cyan), 
-                transparent 75%
+                transparent 65%
             );
-            animation: rotate-border 6s linear infinite;
-            z-index: -1;
+            animation: border-rotate 4s linear infinite;
         }
-        .neon-border-critical::before { background: conic-gradient(transparent, var(--neon-red), transparent 30%); }
-        .neon-border-success::before { background: conic-gradient(transparent, var(--neon-green), transparent 30%); }
 
-        @keyframes rotate-border {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        .neon-border-critical::before {
+            background: conic-gradient(transparent, var(--neon-red), transparent 20%, var(--neon-red), transparent 60%);
+        }
+
+        .neon-border-success::before {
+            background: conic-gradient(transparent, var(--neon-green), transparent 20%, var(--neon-green), transparent 60%);
+        }
+
+        @keyframes border-rotate {
+            100% { transform: rotate(360deg); }
         }
 
         .neon-border-animated::after {
             content: '';
             position: absolute;
-            inset: 3px;
-            background: var(--bg-main);
-            border-radius: 10px;
-            z-index: -1;
+            inset: 1px;
+            background: #010409;
+            border-radius: 5px;
+            z-index: 0;
         }
 
-        /* Inputs exactly like the photo */
+        .inner-content {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* HUD Components */
+        .hud-scan {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 243, 255, 0.5);
+            box-shadow: 0 0 15px var(--neon-cyan);
+            animation: scanline 4s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scanline {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(1000%); }
+        }
+
         .hud-input {
-            background: rgba(2, 6, 23, 0.8) !important;
-            border: 2px solid rgba(0, 243, 255, 0.4) !important;
-            color: #fff !important;
-            text-shadow: 0 0 5px rgba(0, 243, 255, 0.5);
+            background: rgba(0, 0, 0, 0.9) !important;
+            border: 1px solid rgba(0, 243, 255, 0.2) !important;
+            color: var(--neon-cyan) !important;
             font-family: 'Orbitron', sans-serif;
             letter-spacing: 0.1em;
-            text-transform: uppercase;
-            box-shadow: inset 0 0 10px rgba(0, 243, 255, 0.1);
+            transition: all 0.3s ease;
         }
 
         .hud-input:focus {
             border-color: var(--neon-cyan) !important;
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.3), inset 0 0 15px rgba(0, 243, 255, 0.2) !important;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
         }
 
-        /* Button style as seen in the photo */
-        .btn-hud {
-            background: linear-gradient(180deg, rgba(0, 98, 255, 0.2) 0%, rgba(0, 243, 255, 0.4) 100%);
-            border: 2px solid var(--neon-cyan);
+        .btn-militar {
+            position: relative;
+            background: linear-gradient(180deg, rgba(0, 98, 255, 0.1) 0%, rgba(0, 243, 255, 0.3) 100%);
+            border: 1px solid var(--neon-cyan);
             color: white;
-            font-weight: 900;
-            text-shadow: 0 0 10px rgba(0, 243, 255, 1);
-            box-shadow: 0 0 25px rgba(0, 243, 255, 0.4);
-            transition: all 0.3s ease;
-        }
-        .btn-hud:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 40px rgba(0, 243, 255, 0.6);
-            background: linear-gradient(180deg, rgba(0, 98, 255, 0.4) 0%, rgba(0, 243, 255, 0.6) 100%);
-        }
-
-        /* Lightning Bolt Animation */
-        @keyframes lightning-strike {
-            0%, 95%, 100% { opacity: 0; }
-            96% { opacity: 0.8; }
-            97% { opacity: 0.2; }
-            98% { opacity: 1; }
-            99% { opacity: 0.3; }
-        }
-        .lightning-effect {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: white;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 100;
-            animation: lightning-strike 8s infinite;
-        }
-
-        .flicker { animation: flicker-anim 0.3s infinite alternate; }
-        @keyframes flicker-anim {
-            0% { opacity: 1; text-shadow: 0 0 10px var(--neon-cyan); }
-            100% { opacity: 0.9; text-shadow: 0 0 20px var(--neon-cyan); }
-        }
-
-        .access-granted-text {
-            color: var(--neon-green);
-            text-shadow: 0 0 20px var(--neon-green), 0 0 40px rgba(0, 255, 102, 0.5);
+            text-transform: uppercase;
             font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
+            font-weight: 700;
             letter-spacing: 0.2em;
+            transition: all 0.3s ease;
+            overflow: hidden;
         }
 
+        .btn-militar:hover {
+            background: linear-gradient(180deg, rgba(0, 98, 255, 0.3) 0%, rgba(0, 243, 255, 0.5) 100%);
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-militar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-militar:hover::before {
+            left: 100%;
+        }
+
+        /* Flicker */
+        @keyframes flicker {
+            0% { opacity: 1; }
+            5% { opacity: 0.4; }
+            10% { opacity: 1; }
+            50% { opacity: 0.9; }
+            55% { opacity: 0.2; }
+            60% { opacity: 1; }
+            100% { opacity: 1; }
+        }
     </style>
 <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.4",
+    "react-dom": "https://esm.sh/react-dom@^19.2.4",
     "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0",
     "uuid": "https://esm.sh/uuid@^13.0.0",
     "dexie": "https://esm.sh/dexie@^4.3.0",
@@ -226,9 +224,8 @@
 </script>
 </head>
 <body>
-    <div class="lightning-bg"></div>
-    <div class="lightning-effect"></div>
+    <div class="storm-bg"></div>
+    <div class="lightning"></div>
     <div id="root"></div>
-    <div class="scanlines"></div>
 </body>
 </html>
