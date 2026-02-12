@@ -111,8 +111,21 @@ export const useStore = create<AppState>((set, get) => ({
       };
       await db.config.add(user);
     }
+
+    // Default Scheduled Tasks if none exist
+    if (scheduledTasks.length === 0) {
+      const defaultTasks: ScheduledTask[] = [
+        { id: uuidv4(), name: 'Health Monitor', action: 'HEALTH_CHECK', intervalSeconds: 300, lastRun: null, enabled: true },
+        { id: uuidv4(), name: 'Log Purge', action: 'CLEAN_LOGS', intervalSeconds: 3600 * 24, lastRun: null, enabled: true },
+        { id: uuidv4(), name: 'Renewal Scanner', action: 'NOTIFY_RENEWALS', intervalSeconds: 3600 * 12, lastRun: null, enabled: true }
+      ];
+      for (const t of defaultTasks) await db.scheduledTasks.add(t);
+      set({ scheduledTasks: defaultTasks });
+    } else {
+      set({ scheduledTasks });
+    }
     
-    set({ clones, renewals, logs, notifications, user, scheduledTasks, loading: false });
+    set({ clones, renewals, logs, notifications, user, loading: false });
   },
 
   login: async (u, p) => {
@@ -349,10 +362,49 @@ export const useStore = create<AppState>((set, get) => ({
       if (!task.enabled) continue;
       const lastRunDate = task.lastRun ? new Date(task.lastRun) : new Date(0);
       const secondsSinceLastRun = (now.getTime() - lastRunDate.getTime()) / 1000;
+      
       if (secondsSinceLastRun >= task.intervalSeconds) {
+        console.log(`[TaskEngine] Ejecutando: ${task.name}`);
         switch(task.action) {
-          case 'SYNC_ALL': await get().syncAll(); break;
-          case 'HEALTH_CHECK': await get().addLog('INFO', 'Health check nominal.'); break;
+          case 'SYNC_ALL': 
+            await get().syncAll(); 
+            break;
+            
+          case 'HEALTH_CHECK': 
+            const currentClones = get().clones;
+            let offlineCount = 0;
+            for (const clone of currentClones) {
+              // 5% de probabilidad de fallo simulado por chequeo
+              if (Math.random() < 0.05 && clone.serverStatus === ServerStatus.ONLINE) {
+                await get().updateClone(clone.id, { serverStatus: ServerStatus.OFFLINE });
+                await get().addLog('CRITICAL', `LATENCIA CRÍTICA: Nodo ${clone.name} ha perdido el handshake.`);
+                await get().addNotification(NotificationLevel.CRITICAL, 'FALLO DE RED', `Se ha perdido la conexión con el clon ${clone.name}.`);
+                offlineCount++;
+              }
+            }
+            if (offlineCount > 0) playSound('alert');
+            await get().addLog('INFO', `Monitorización completada. Nodos escaneados: ${currentClones.length}. Fallos: ${offlineCount}.`);
+            break;
+
+          case 'CLEAN_LOGS':
+            await db.logs.orderBy('timestamp').reverse().offset(100).delete();
+            const freshLogs = await db.logs.orderBy('timestamp').reverse().limit(100).toArray();
+            set({ logs: freshLogs });
+            get().addLog('INFO', 'Purga de registros antiguos completada. Base de datos optimizada.');
+            break;
+
+          case 'NOTIFY_RENEWALS':
+            const currentRenewals = get().renewals;
+            let pendingNotifs = 0;
+            for (const r of currentRenewals) {
+              const diffDays = Math.ceil((new Date(r.renewalDate).getTime() - now.getTime()) / (1000 * 3600 * 24));
+              if (diffDays <= 3 && diffDays > 0 && (!r.snoozeUntil || new Date(r.snoozeUntil) < now)) {
+                await get().addNotification(NotificationLevel.WARNING, 'AVISO DE PAGO', `El servicio ${r.name} caduca en ${diffDays} días.`);
+                pendingNotifs++;
+              }
+            }
+            if (pendingNotifs > 0) get().addLog('WARNING', `Escaneo de facturación completo. ${pendingNotifs} renovaciones próximas detectadas.`);
+            break;
         }
         await get().updateScheduledTask(task.id, { lastRun: now.toISOString() });
       }
@@ -413,11 +465,11 @@ export const useStore = create<AppState>((set, get) => ({
   importBackup: async (json) => {
     try {
       const data = JSON.parse(json);
-      // Fix: Ensured db instance (from ElJefazoDB) is used within the transaction correctly after named import fix in db.ts.
       await db.transaction('rw', [db.clones, db.renewals, db.config, db.logs, db.scheduledTasks], async () => {
         if (data.clones) { await db.clones.clear(); await db.clones.bulkAdd(data.clones); }
         if (data.renewals) { await db.renewals.clear(); await db.renewals.bulkAdd(data.renewals); }
         if (data.config) { await db.config.clear(); await db.config.add(data.config); }
+        if (data.tasks) { await db.scheduledTasks.clear(); await db.scheduledTasks.bulkAdd(data.tasks); }
       });
       get().addLog('INFO', 'Core restaurado. Reiniciando mainframe...');
       playSound('success');

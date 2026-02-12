@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useStore } from '../store';
 
 const Login: React.FC = () => {
-  const [username, setUsername] = useState('ELI');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -13,10 +13,10 @@ const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const ok = await login(username, password);
+    // Shortcut: Press enter with empty fields to login as ELI
+    const ok = await login(username || 'ELI', password);
     if (ok) {
       setSuccess(true);
-      // Wait for animation
     } else {
       setError(true);
       setTimeout(() => setError(false), 2000);
@@ -25,85 +25,96 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-[#010409] relative overflow-hidden">
-      {/* Background Glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,147,255,0.15)_0%,transparent_70%)]"></div>
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-transparent relative overflow-hidden">
+      
+      {/* Dynamic Blue Aura */}
+      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/20 blur-[150px] rounded-full animate-pulse-slow"></div>
+        <div className="absolute top-[30%] left-1/4 w-[400px] h-[400px] bg-cyan-400/10 blur-[120px] rounded-full animate-pulse"></div>
+      </div>
 
       <div className="w-full max-w-lg z-10 flex flex-col items-center">
-        {/* Main Title */}
-        <h1 className="text-6xl md:text-8xl font-hud metallic-text mb-12 tracking-tighter animate-flicker">
+        {/* EL JEFAZO - Precision Chrome Title */}
+        <h1 className="text-6xl md:text-8xl metallic-text mb-12 tracking-tight text-center leading-none select-none">
           EL JEFAZO
         </h1>
 
-        {/* Central Vehicle - Bugatti style with aura */}
-        <div className="relative w-full aspect-[16/10] mb-12 group">
-          <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full scale-75 animate-pulse"></div>
+        {/* Central Vehicle Section */}
+        <div className="relative w-full max-w-md mb-16 group">
+          {/* Vehicle Shadow & Glow */}
+          <div className="absolute inset-x-0 bottom-4 h-12 bg-blue-500/30 blur-[40px] rounded-full scale-x-110"></div>
+          
+          {/* Main Car Image (Bugatti Veyron style) */}
           <img 
-            src="https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=800&q=80" 
-            className="w-full h-full object-contain relative z-10 brightness-110 contrast-125 drop-shadow-[0_0_30px_rgba(0,147,255,0.5)]"
-            alt="Main Control Vehicle"
+            src="https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=1000&q=90" 
+            className="w-full relative z-10 brightness-110 contrast-125 drop-shadow-[0_0_30px_rgba(0,147,255,0.3)]"
+            alt="Control Vehicle"
           />
-          {/* Animated Rays on the car */}
-          <div className="absolute inset-0 z-20 pointer-events-none">
-             <div className="absolute top-1/2 left-0 w-full h-px bg-cyan-400 opacity-0 animate-[lightning-ray_5s_infinite] blur-[1px]"></div>
+          
+          {/* Ground Mirror Reflection */}
+          <div className="absolute top-[92%] left-0 w-full car-reflection opacity-25 transform scale-y-[-0.7] blur-[1px]">
+             <img 
+                src="https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&w=1000&q=90" 
+                className="w-full" 
+                alt="Reflection"
+             />
           </div>
         </div>
 
-        {/* Form Fields - Identical to photo */}
-        <form onSubmit={handleLogin} className="w-full max-w-sm space-y-6">
-          <input 
-            type="text" 
-            placeholder="USUARIO / ID"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full hud-input p-5 text-lg rounded border border-cyan-500/30 outline-none focus:border-cyan-500 transition-all uppercase"
-          />
-          <input 
-            type="password" 
-            placeholder="CONTRASEÑA"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full hud-input p-5 text-lg rounded border border-cyan-500/30 outline-none focus:border-cyan-500 transition-all uppercase"
-          />
+        {/* Login Container - Matches Photo Structure */}
+        <form onSubmit={handleLogin} className="w-full max-w-[340px] space-y-4">
+          <div className="relative group">
+            <input 
+              type="text" 
+              placeholder="USUARIO / ID"
+              value={username}
+              onChange={(e) => setUsername(e.target.value.toUpperCase())}
+              className="w-full hud-input-clone p-4 text-center text-sm outline-none placeholder:text-cyan-500/30"
+            />
+          </div>
+          
+          <div className="relative group">
+            <input 
+              type="password" 
+              placeholder="CONTRASEÑA"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full hud-input-clone p-4 text-center text-sm outline-none placeholder:text-cyan-500/30"
+            />
+          </div>
 
           <button 
             type="submit"
             disabled={loading || success}
-            className="w-full btn-militar p-5 text-2xl tracking-[0.4em] mt-4"
+            className="w-full btn-entrar p-4 text-xl mt-4 select-none"
           >
-            {loading ? 'CONECTANDO...' : 'ENTRAR'}
+            {loading ? '---' : 'ENTRAR'}
           </button>
         </form>
 
         {error && (
-          <p className="mt-8 text-red-500 font-hud text-xs tracking-[0.5em] animate-pulse">
-            // ACCESO_DENEGADO //
-          </p>
+          <div className="mt-8 flex flex-col items-center">
+            <div className="h-px w-24 bg-red-600/50 mb-2"></div>
+            <p className="text-red-500 font-hud text-[10px] tracking-[0.5em] animate-pulse">
+              ACCESO_DENEGADO
+            </p>
+          </div>
         )}
       </div>
 
-      {/* Access Granted Overlay - From Video */}
+      {/* Success Access Animation */}
       {success && (
-        <div className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center animate-in fade-in duration-500">
-          <div className="relative w-full max-w-4xl text-center">
-             <div className="hud-scan"></div>
-             <h2 className="text-5xl md:text-8xl font-hud font-black text-[#00ff66] drop-shadow-[0_0_20px_#00ff66] tracking-widest uppercase mb-4">
-               ACCESO CONCEDIDO
+        <div className="fixed inset-0 z-[200] bg-black flex items-center justify-center animate-in fade-in duration-1000">
+          <div className="relative text-center">
+             <div className="absolute inset-0 bg-cyan-500/10 blur-[100px] animate-pulse"></div>
+             <h2 className="text-4xl md:text-6xl font-hud font-black text-[#00f3ff] drop-shadow-[0_0_20px_#00f3ff] tracking-widest uppercase mb-4">
+               BIENVENIDO_ELI
              </h2>
-             <div className="h-1 w-full bg-green-500/50 shadow-[0_0_20px_rgba(0,255,102,0.8)]"></div>
-             <p className="mt-8 font-hud text-green-900 tracking-[0.8em] text-[10px] animate-pulse">SINCRONIZANDO NODOS_MAESTROS_ELI...</p>
+             <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-cyan-500 to-transparent shadow-[0_0_15px_#00f3ff]"></div>
+             <p className="mt-6 font-hud text-cyan-900 tracking-[0.6em] text-[8px] uppercase">Inicializando Mainframe...</p>
           </div>
         </div>
       )}
-
-      <style>{`
-        @keyframes lightning-ray {
-          0%, 95%, 100% { opacity: 0; transform: translateY(0); }
-          96% { opacity: 0.8; transform: translateY(-20px); }
-          97% { opacity: 0.2; transform: translateY(20px); }
-          98% { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 };
